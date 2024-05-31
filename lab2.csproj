@@ -13,6 +13,7 @@
     <PackageReference Include="AForge.Imaging" Version="2.2.5" />
     <PackageReference Include="Emgu.cv" Version="4.8.1.5350" />
     <PackageReference Include="Emgu.CV.Bitmap" Version="4.8.1.5350" />
+    <PackageReference Include="MaterialSkin.2" Version="2.3.1" />
     <PackageReference Include="OxyPlot.WindowsForms" Version="2.1.2" />
     <PackageReference Include="OxyPlot.Wpf" Version="2.1.2" />
   </ItemGroup>

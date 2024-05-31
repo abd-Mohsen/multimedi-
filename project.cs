@@ -5,39 +5,45 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Windows.Forms;
+using Material;
+using MaterialSkin.Controls;
+using OxyPlot;
 
 namespace Project
 {
     public partial class MyForm : Form
     {
         private PictureBox pictureBox1;
-        //private PictureBox pictureBox2;    
+        //downscale picturebox    
         private Bitmap? originalImage;
         
-        MyButton load1Button = new();
-        MyButton load2Button = new();
-        MyButton classifyButton = new();
+        MaterialButton load1Button = new();
+        MaterialButton load2Button = new();
+        MaterialButton classifyButton = new();
     
 
         public MyForm()
         {
+            BackColor = ColorTranslator.FromHtml("#202123");
+            Size = new Size(700, 500);
+            Text = "x-ray";
+
             pictureBox1 = new PictureBox
             {
                 Dock = DockStyle.Fill,
-                SizeMode = PictureBoxSizeMode.Normal
+                SizeMode = PictureBoxSizeMode.StretchImage,
+                Size = new Size(300, 300),
+                Anchor = AnchorStyles.None,
+                BackColor = ColorTranslator.FromHtml("#202123"),
             };
-            BackColor = ColorTranslator.FromHtml("#202123");
-
-
+            
             load1Button = new()
             {
                 Text = "إدخال صورة",
                 Dock = DockStyle.Top
             };
-            load1Button.Click += (sender, e) =>
-            {
-                LoadImage(sender, e, true);
-            };
+            load1Button.Click += (sender, e) => LoadImage(sender, e, true);
+            
 
             load2Button = new()
             {
@@ -45,10 +51,8 @@ namespace Project
                 Dock = DockStyle.Top,
                 Visible = false,
             };
-            load2Button.Click += (sender, e) =>
-            {
-                LoadImage(sender, e, false); //not working
-            };
+            load2Button.Click += (sender, e) => LoadImage(sender, e, false);
+            
 
             classifyButton = new()
             {
@@ -93,6 +97,7 @@ namespace Project
                         pictureBox1.Image = originalImage;
                         load2Button.Visible = true;
                         classifyButton.Visible = true;
+                        load1Button.Text = "تبديل الصورة";
                     }
                     else CompareImages(selectedImage); 
                 }
@@ -108,7 +113,7 @@ namespace Project
 
         private void CompareImages(Bitmap newImage)
         {
-            // what if they werent the same lsize, return false?
+            // what if they werent the same size, return false?
             double simillar = 0;
      
             for (int x = 0; x < Math.Min(originalImage!.Width, newImage.Width); x++)
@@ -123,13 +128,28 @@ namespace Project
             double percentage = simillar/(originalImage.Width*originalImage.Height)*100;
            
             MessageBox.Show(
-                (percentage > 0.7 ? "لا يوجد تقدم او تأخر ملحوظ في المرض" : "يوجد تغير في حالة المرض") + $"\nنسبة التشابه {percentage}"
+                (percentage > 95 ? "لا يوجد تقدم او تأخر ملحوظ في المرض" : "يوجد تغير في حالة المرض") + 
+                $"\nنسبة التغير %{100 - percentage:0.00}"
             );
         }
 
         private void ClassifyImage(object? sender, EventArgs e)
         {
-            MessageBox.Show("حالة سيئة");
+            double totalLuminance = 0;
+            for (int x = 0; x < originalImage!.Width; x++)
+            {
+                for (int y = 0; y < originalImage.Height; y++)
+                {
+                    Color pixelColor = originalImage.GetPixel(x, y);
+                    double luminance = (pixelColor.R + pixelColor.G + pixelColor.B) / 3.0;
+                    totalLuminance += luminance;
+                }
+            }
+            double avgLuminance = totalLuminance / (originalImage!.Width*originalImage.Height);
+            if(avgLuminance < 85) MessageBox.Show("حالة مرضية خفيفة");
+            else if (avgLuminance < 170) MessageBox.Show("حالة مرضية متوسطة");
+            else MessageBox.Show("حالة مرضية شديدة");
+           // MessageBox.Show(avgLuminance.ToString());
         }
 
 
