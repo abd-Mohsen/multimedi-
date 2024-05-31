@@ -7,28 +7,36 @@ using System.Drawing.Imaging;
 using System.Windows.Forms;
 using Material;
 using MaterialSkin.Controls;
-using OxyPlot;
+using MaterialSkin;
+
+using AForge.Imaging;
+using AForge.Imaging.Filters;
 
 namespace Project
 {
-    public partial class MyForm : Form
+    public partial class MyForm : MaterialForm
     {
-        private PictureBox pictureBox1;
+        private PictureBox pictureBox;
         //downscale picturebox    
         private Bitmap? originalImage;
         
         MaterialButton load1Button = new();
         MaterialButton load2Button = new();
         MaterialButton classifyButton = new();
+        MaterialButton enhanceButton = new();
     
 
         public MyForm()
         {
-            BackColor = ColorTranslator.FromHtml("#202123");
-            Size = new Size(700, 500);
+            MaterialSkinManager materialSkinManager = MaterialSkinManager.Instance;
+            materialSkinManager.AddFormToManage(this);
+            materialSkinManager.Theme = MaterialSkinManager.Themes.DARK;
+
+            //BackColor = ColorTranslator.FromHtml("#202123");
+            Size = new Size(700, 550);
             Text = "x-ray";
 
-            pictureBox1 = new PictureBox
+            pictureBox = new PictureBox
             {
                 Dock = DockStyle.Fill,
                 SizeMode = PictureBoxSizeMode.StretchImage,
@@ -62,19 +70,29 @@ namespace Project
             };
             classifyButton.Click += ClassifyImage;
 
+            enhanceButton = new()
+            {
+                Text = "تحسين الصورة",
+                Dock = DockStyle.Top,
+                Visible = false,
+            };
+            enhanceButton.Click += EnhanceImage;
+
         
             TableLayoutPanel layout = new()
             {
-                Dock = DockStyle.Fill
+                Dock = DockStyle.Fill,
+                AutoScroll = true,
             };
             //layout.RowCount = 7;
             layout.RowStyles.Add(new RowStyle(SizeType.Percent, 90));
             // layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             
-            layout.Controls.Add(pictureBox1, 0, 0);
+            layout.Controls.Add(pictureBox, 0, 0);
             layout.Controls.Add(load1Button, 0, 2);
             layout.Controls.Add(load2Button, 0, 3);
-            layout.Controls.Add(classifyButton, 0, 4);
+            layout.Controls.Add(classifyButton, 0, 3);
+            layout.Controls.Add(enhanceButton, 0, 4);
             //layout.SetRowSpan(pictureBox2, 20);
 
             Controls.Add(layout);
@@ -94,9 +112,10 @@ namespace Project
                     Bitmap selectedImage = new(openFileDialog.FileName);
                     if(og){
                         originalImage = selectedImage;
-                        pictureBox1.Image = originalImage;
+                        pictureBox.Image = originalImage;
                         load2Button.Visible = true;
                         classifyButton.Visible = true;
+                        enhanceButton.Visible = true;
                         load1Button.Text = "تبديل الصورة";
                     }
                     else CompareImages(selectedImage); 
@@ -150,6 +169,19 @@ namespace Project
             else if (avgLuminance < 170) MessageBox.Show("حالة مرضية متوسطة");
             else MessageBox.Show("حالة مرضية شديدة");
            // MessageBox.Show(avgLuminance.ToString());
+        }
+
+        private void EnhanceImage(object? sender, EventArgs e){
+            
+            // Convert the image to grayscale
+            Grayscale filter = new Grayscale(0.2125, 0.7154, 0.0721);
+            Bitmap grayImage= filter.Apply(originalImage);
+            // Apply FFT to the grayscale image
+            ComplexImage complexImage= ComplexImage.FromBitmap(grayImage);
+            complexImage.ForwardFourierTransform();
+            // Compute the magnitude spectrum for visualization
+            //Bitmap magnitudeImage= complexImage.ToBitmap();
+            pictureBox.Image = complexImage.ToBitmap();
         }
 
 
