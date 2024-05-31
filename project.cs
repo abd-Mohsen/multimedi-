@@ -67,10 +67,10 @@ namespace Project
             layout.RowStyles.Add(new RowStyle(SizeType.Percent, 90));
             // layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             
-            layout.Controls.Add(pictureBox1, 2, 0);
-            layout.Controls.Add(load1Button, 0, 1);
-            layout.Controls.Add(load2Button, 0, 1);
-            layout.Controls.Add(classifyButton, 0, 6);
+            layout.Controls.Add(pictureBox1, 0, 0);
+            layout.Controls.Add(load1Button, 0, 2);
+            layout.Controls.Add(load2Button, 0, 3);
+            layout.Controls.Add(classifyButton, 0, 4);
             //layout.SetRowSpan(pictureBox2, 20);
 
             Controls.Add(layout);
@@ -94,38 +94,37 @@ namespace Project
                         load2Button.Visible = true;
                         classifyButton.Visible = true;
                     }
-                    else{
-                        MessageBox.Show(
-                            CompareImages(selectedImage) ?
-                             "لا يوجد تقدم او تأخر ملحوظ في المرض" :
-                             "يوجد تغير في حالة المرض"
-                        );
-                    }
+                    else CompareImages(selectedImage); 
                 }
                 catch (Exception ex)
                 {
                     MessageBox.Show("\nخطا في اختيار الصورة" + ex.Message);
                 }
             }
-            else{
-                MessageBox.Show(DialogResult.ToString());
-            }
+            // else{
+            //     MessageBox.Show(DialogResult.ToString());
+            // }
         }
 
-        public bool CompareImages(Bitmap newImage)
+        private void CompareImages(Bitmap newImage)
         {
             // what if they werent the same lsize, return false?
-            int simillar = 0;
+            double simillar = 0;
      
             for (int x = 0; x < Math.Min(originalImage!.Width, newImage.Width); x++)
             {
                 for (int y = 0; y < Math.Min(originalImage!.Height, newImage.Height); y++)
                 {
-                    if (originalImage.GetPixel(x, y) == newImage.GetPixel(x, y)) simillar++;
+                    Color first = originalImage.GetPixel(x, y);
+                    Color second = newImage.GetPixel(x, y);
+                    if (first.R == second.R && first.G == second.G && first.B == second.B) simillar++;
                 }
             }
-
-            return simillar/(originalImage.Width*originalImage.Height) > 0.7;
+            double percentage = simillar/(originalImage.Width*originalImage.Height)*100;
+           
+            MessageBox.Show(
+                (percentage > 0.7 ? "لا يوجد تقدم او تأخر ملحوظ في المرض" : "يوجد تغير في حالة المرض") + $"\nنسبة التشابه {percentage}"
+            );
         }
 
         private void ClassifyImage(object? sender, EventArgs e)
