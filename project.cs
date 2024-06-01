@@ -193,8 +193,8 @@ namespace Project
             ComplexImage complexImage = ComplexImage.FromBitmap(greyImage);
             complexImage.ForwardFourierTransform();
 
-            // low-pass filter mask
-            double[,] filterMask = CreateLowPassFilterMask(complexImage.Width, complexImage.Height, 50);
+            // high-pass filter mask
+            double[,] filterMask = CreateHighPassFilterMask(complexImage.Width, complexImage.Height, 1);
             ApplyFilterMask(complexImage, filterMask);
 
             // IFFT
@@ -225,6 +225,23 @@ namespace Project
             return filterMask;
         }
 
+        static double[,] CreateHighPassFilterMask(int width, int height, double cutoffFreq){
+            double[,] filterMask = new double[height, width];
+
+            int centerX = width / 2;
+            int centerY = height / 2;
+
+            for (int y = 0; y < height; y++){
+                for (int x = 0; x < width; x++){
+                    double distance = Math.Sqrt((x - centerX) * (x - centerX) + (y - centerY) * (y - centerY));
+
+                    if (distance <= cutoffFreq) filterMask[y, x] = 0; // Low frequency component
+                    else filterMask[y, x] = 1; // High frequency component
+                }
+            }
+
+            return filterMask;
+}
 
         static void ApplyFilterMask(ComplexImage complexImage, double[,] filterMask){
             for(int y=0; y<complexImage.Height; y++){
@@ -233,13 +250,6 @@ namespace Project
                 }
             }
         }
-
-        static Bitmap ConvertToFormat(System.Drawing.Image image, PixelFormat format)
-        {
-            Bitmap copy = new(image.Width, image.Height, format);
-            return copy;
-        }
-
 
 
         static class Program
