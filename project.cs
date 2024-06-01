@@ -8,9 +8,9 @@ using System.Windows.Forms;
 using Material;
 using MaterialSkin.Controls;
 using MaterialSkin;
-
 using AForge.Imaging;
 using AForge.Imaging.Filters;
+using AForge.Math;
 
 namespace Project
 {
@@ -117,6 +117,7 @@ namespace Project
                         classifyButton.Visible = true;
                         enhanceButton.Visible = true;
                         load1Button.Text = "تبديل الصورة";
+                        //ConvertToFormat(originalImage!, PixelFormat.Format16bppGrayScale);
                     }
                     else CompareImages(selectedImage); 
                 }
@@ -171,18 +172,74 @@ namespace Project
            // MessageBox.Show(avgLuminance.ToString());
         }
 
+        //not working for all pixxel formats, its blurring the immage rather than sharpening it
         private void EnhanceImage(object? sender, EventArgs e){
-            
-            // Convert the image to grayscale
-            Grayscale filter = new Grayscale(0.2125, 0.7154, 0.0721);
-            Bitmap grayImage= filter.Apply(originalImage);
-            // Apply FFT to the grayscale image
-            ComplexImage complexImage= ComplexImage.FromBitmap(grayImage);
+            int newWidth = NearestPowerOfTwo(originalImage!.Width);
+            int newHeight = NearestPowerOfTwo(originalImage!.Height);
+
+            if(newWidth != originalImage.Width || newHeight != originalImage.Height){
+                ResizeBilinear filter1 = new(newWidth, newHeight);
+                originalImage = filter1.Apply(originalImage);
+            }
+
+            Grayscale filter = new(0.2125, 0.7154, 0.0721);
+            Bitmap greyImage = originalImage;
+
+            if(originalImage!.PixelFormat != PixelFormat.Format8bppIndexed){
+                greyImage = filter.Apply(originalImage);
+            }
+           
+            //FFT
+            ComplexImage complexImage = ComplexImage.FromBitmap(greyImage);
             complexImage.ForwardFourierTransform();
-            // Compute the magnitude spectrum for visualization
-            //Bitmap magnitudeImage= complexImage.ToBitmap();
+
+            // low-pass filter mask
+            double[,] filterMask = CreateLowPassFilterMask(complexImage.Width, complexImage.Height, 50);
+            ApplyFilterMask(complexImage, filterMask);
+
+            // IFFT
+            complexImage.BackwardFourierTransform();
             pictureBox.Image = complexImage.ToBitmap();
         }
+
+        static int NearestPowerOfTwo(int val){
+            int power = 1;
+            while(power < val) power <<= 1;
+            return power;
+        }
+
+        static double[,] CreateLowPassFilterMask(int width, int height, double cutoffFreq){
+            double[,] filterMask = new double[height,width];
+
+            int centerX = width/2;
+            int centerY = height/2;
+
+            for(int y=0; y<height; y++){
+                for(int x=0; x<width; x++){
+                    double distance = Math.Sqrt((x - centerX)*(x - centerX) + (y - centerY)*(y - centerY));
+
+                    if(distance <= cutoffFreq) filterMask[y,x] = 1;
+                    else filterMask[y,x] = 0;
+                }
+            }
+            return filterMask;
+        }
+
+
+        static void ApplyFilterMask(ComplexImage complexImage, double[,] filterMask){
+            for(int y=0; y<complexImage.Height; y++){
+                for(int x=0; x<complexImage.Width; x++){
+                    complexImage.Data[y,x] *= filterMask[y,x];
+                }
+            }
+        }
+
+        static Bitmap ConvertToFormat(System.Drawing.Image image, PixelFormat format)
+        {
+            Bitmap copy = new(image.Width, image.Height, format);
+            return copy;
+        }
+
 
 
         static class Program
