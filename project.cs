@@ -10,20 +10,24 @@ using MaterialSkin.Controls;
 using MaterialSkin;
 using AForge.Imaging;
 using AForge.Imaging.Filters;
-using AForge.Math;
+using Microsoft.VisualBasic;
 
 namespace Project
 {
     public partial class MyForm : MaterialForm
     {
-        private PictureBox pictureBox;
+        PictureBox pictureBox;
         //downscale picturebox    
-        private Bitmap? originalImage;
+        Bitmap? originalImage;
+
+        string? patientName;
         
         MaterialButton load1Button = new();
         MaterialButton load2Button = new();
         MaterialButton classifyButton = new();
         MaterialButton enhanceButton = new();
+        MaterialButton smoothButton = new();
+        MaterialButton textButton = new();
     
 
         public MyForm()
@@ -76,7 +80,23 @@ namespace Project
                 Dock = DockStyle.Top,
                 Visible = false,
             };
-            enhanceButton.Click += EnhanceImage;
+            enhanceButton.Click += (sender, e) => EnhanceImage(sender, e, true);
+
+            smoothButton = new()
+            {
+                Text = "تنعيم الصورة",
+                Dock = DockStyle.Top,
+                Visible = false,
+            };
+            smoothButton.Click += (sender, e) => EnhanceImage(sender, e, false);
+
+            textButton = new()
+            {
+                Text = "إضافة تعليق نصي",
+                Dock = DockStyle.Top,
+                Visible = false,
+            };
+            textButton.Click += AddTextToImage;
 
         
             TableLayoutPanel layout = new()
@@ -93,6 +113,8 @@ namespace Project
             layout.Controls.Add(load2Button, 0, 3);
             layout.Controls.Add(classifyButton, 0, 3);
             layout.Controls.Add(enhanceButton, 0, 4);
+            layout.Controls.Add(smoothButton, 0, 4);
+            layout.Controls.Add(textButton, 0, 5);
             //layout.SetRowSpan(pictureBox2, 20);
 
             Controls.Add(layout);
@@ -116,6 +138,8 @@ namespace Project
                         load2Button.Visible = true;
                         classifyButton.Visible = true;
                         enhanceButton.Visible = true;
+                        smoothButton.Visible = true;
+                        textButton.Visible = true;
                         load1Button.Text = "تبديل الصورة";
                         //ConvertToFormat(originalImage!, PixelFormat.Format16bppGrayScale);
                     }
@@ -173,7 +197,7 @@ namespace Project
         }
 
         //not working for all pixxel formats, its blurring the immage rather than sharpening it
-        private void EnhanceImage(object? sender, EventArgs e){
+        private void EnhanceImage(object? sender, EventArgs e, bool sharp){
             int newWidth = NearestPowerOfTwo(originalImage!.Width);
             int newHeight = NearestPowerOfTwo(originalImage!.Height);
 
@@ -193,8 +217,14 @@ namespace Project
             ComplexImage complexImage = ComplexImage.FromBitmap(greyImage);
             complexImage.ForwardFourierTransform();
 
-            // high-pass filter mask
-            double[,] filterMask = CreateHighPassFilterMask(complexImage.Width, complexImage.Height, 1);
+            double[,] filterMask;
+
+            if(sharp){
+                filterMask = CreateHighPassFilterMask(complexImage.Width, complexImage.Height, 1);
+            } else {
+                filterMask = CreateLowPassFilterMask(complexImage.Width, complexImage.Height, 50);
+            }
+           
             ApplyFilterMask(complexImage, filterMask);
 
             // IFFT
@@ -241,7 +271,30 @@ namespace Project
             }
 
             return filterMask;
-}
+        }
+
+        private void AddTextToImage(object? sender, EventArgs e)
+        {
+            string input = Interaction.InputBox("أدخل اسم المريض", "الاسم", "");
+
+            // Store the entered name
+            if (string.IsNullOrEmpty(input)){
+                MessageBox.Show("No name entered!");
+                return;
+            }
+            patientName = input;
+            
+            Bitmap newImage = originalImage!.Clone(new Rectangle(0, 0, originalImage.Width, originalImage.Height), PixelFormat.Format32bppArgb);
+            using (Graphics graphics = Graphics.FromImage(newImage))
+            {
+                Font font = new("Arial", 22);
+                Brush brush = new SolidBrush(Color.Red);
+                PointF position = new(10, 10); // Adjust the position as needed
+                graphics.DrawString(patientName, font, brush, position);
+            }
+
+            pictureBox.Image = newImage;
+        }
 
         static void ApplyFilterMask(ComplexImage complexImage, double[,] filterMask){
             for(int y=0; y<complexImage.Height; y++){
