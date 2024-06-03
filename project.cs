@@ -14,6 +14,7 @@ using Microsoft.VisualBasic;
 using NAudio;
 using NAudio.Wave;
 using Report;
+using System.IO.Compression;
 
 namespace Project
 {

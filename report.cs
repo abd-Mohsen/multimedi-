@@ -3,6 +3,10 @@ using MaterialSkin;
 using Xceed.Words.NET;
 using System.Diagnostics;
 using Project;
+using Spire.Doc;
+
+using PdfSharp.Pdf;
+using PdfSharp.Drawing;
 
 namespace Report
 {
@@ -29,6 +33,7 @@ namespace Report
                 Multiline = true,
                 Height = 250,
                 Width = 290,
+                Name = "اكتب التقرير هنا",
                 //ScrollBars = RichTextBoxScrollBars.Vertical,
                 //Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right,
             };
@@ -46,7 +51,7 @@ namespace Report
                 Dock = DockStyle.Top,
                 Visible = false,
             };
-            generateButton.Click += GenerateReport;
+            exportButton.Click += ExportReport;
 
             TableLayoutPanel layout = new()
             {
@@ -71,10 +76,52 @@ namespace Report
             //wordFile.AddImage("output/selected.jpeg");
             wordFile.Save();
             exportButton.Visible = true;
+            //Process.Start("winword.exe","output/report.docx");
         }
 
-        private void exportReport(object? sender, EventArgs e){
-            //export to pdf
+        private void ExportReport(object? sender, EventArgs e){
+                
+            try
+            {
+                Document document = new Document();
+                document.LoadFromFile("output/report.docx");
+                document.SaveToFile("output/report.pdf", FileFormat.PDF);
+                MessageBox.Show("Conversion Successful!");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error: " + ex.Message);
+            }
+    
         }
+
+    private void CreatePdf2(object? sender, EventArgs e)
+    {
+        PdfDocument document = new PdfDocument();
+        document.Info.Title = "medical report";
+
+        PdfPage page = document.AddPage();
+
+        XGraphics gfx = XGraphics.FromPdfPage(page);
+
+        XFont font = new("Verdana", 16);
+
+        // Split the text into lines
+        string[] lines = textBox.Text.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+
+        // Define starting position
+        double yPos = 40; // Start 40 points from the top of the page
+        double lineHeight = font.GetHeight() + 5; // Line height including some space between lines
+
+        foreach (string line in lines)
+        {
+            gfx.DrawString(line, font, XBrushes.Black, new XRect(20, yPos, page.Width - 40, page.Height), XStringFormats.TopLeft);
+            yPos += lineHeight; // Move down for the next line
+        }
+
+        // Save the document
+        document.Save("output/report2.pdf");
+    }
+
     }
 }

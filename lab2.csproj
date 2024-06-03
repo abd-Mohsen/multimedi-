@@ -19,6 +19,8 @@
     <PackageReference Include="NAudio" Version="2.2.1" />
     <PackageReference Include="OxyPlot.WindowsForms" Version="2.1.2" />
     <PackageReference Include="OxyPlot.Wpf" Version="2.1.2" />
+    <PackageReference Include="PDFsharp" Version="6.1.0" />
+    <PackageReference Include="Spire.Doc" Version="12.5.5" />
   </ItemGroup>
 
 </Project>
