@@ -16,10 +16,10 @@ namespace Report
         MaterialButton generateButton;
         MaterialButton exportButton;
 
-        MainForm mainForm;
+        //MainForm mainForm;
        
-        public ReportForm(MainForm mainForm){
-            this.mainForm = mainForm;
+        public ReportForm(){
+            //this.mainForm = mainForm;
             
             MaterialSkinManager materialSkinManager = MaterialSkinManager.Instance;
             materialSkinManager.AddFormToManage(this);

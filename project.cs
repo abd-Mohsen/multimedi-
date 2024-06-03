@@ -108,7 +108,7 @@ namespace Project
             {
                 Text = "إضافة تعليق صوتي",
                 Dock = DockStyle.Top,
-                Visible = false,
+                Visible = true,
             };
             audioButton.Click += OpenAudioForm;
 
@@ -116,7 +116,7 @@ namespace Project
             {
                 Text = "تقرير",
                 Dock = DockStyle.Top,
-                Visible = false,
+                Visible = true,
             };
             reportButton.Click += OpenReportForm;
 
@@ -298,7 +298,7 @@ namespace Project
 
         private void OpenReportForm(object? sender, EventArgs e){
             try{
-                using (var reportForm = new ReportForm(this))
+                using (var reportForm = new ReportForm())
                 {
                     if (reportForm.ShowDialog() == DialogResult.OK)
                     {

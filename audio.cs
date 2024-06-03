@@ -1,13 +1,14 @@
 using System;
 using System.IO;
 using System.Windows.Forms;
+using MaterialSkin;
 using MaterialSkin.Controls;
 using NAudio.Wave;
 
 public class AudioForm : MaterialForm
 {
     private WaveInEvent waveIn;
-    private WaveFileWriter writer;
+    private WaveFileWriter? waveFileWriter;
     private MemoryStream memoryStream;
     private WaveOutEvent waveOut;
     private System.Windows.Forms.Timer timer;
@@ -17,11 +18,19 @@ public class AudioForm : MaterialForm
     private MaterialButton playButton = new();
     private MaterialButton saveButton = new();
 
+    MaterialLabel recordingTimeLabel = new();
+
+    readonly string path = "output/audio.wav";
+    readonly string path2 = "output/audio_temp.wav";
+    AudioFileReader? audioFileReader;
+
     public MemoryStream RecordedAudio { get; private set; }
 
     public AudioForm()
     {
-        //InitializeComponent();
+        MaterialSkinManager materialSkinManager = MaterialSkinManager.Instance;
+        materialSkinManager.AddFormToManage(this);
+        materialSkinManager.Theme = MaterialSkinManager.Themes.DARK;
 
         timer = new()
         {
@@ -29,76 +38,128 @@ public class AudioForm : MaterialForm
         };
         timer.Tick += Timer_Tick;
 
+        recordButton = new(){
+            Text = "تسجيل",
+            Visible = true,
+        };
         recordButton.Click += StartRecording;
-        stopButton.Click += StopRecordingButton_Click;
-        playButton.Click += PlayRecordingButton_Click;
-        saveButton.Click += SaveRecordingButton_Click;
+
+        stopButton = new(){
+            Text = "توقف",
+            Visible = false,
+        };
+        stopButton.Click += StopRecording;
+
+        playButton = new(){
+            Text = "سماع",
+            Visible = false,
+        };
+        playButton.Click += PlayRecord;
+       
+
+        TableLayoutPanel layout = new()
+        {
+            Dock = DockStyle.Fill,
+            AutoScroll = true,
+        };
+           
+        layout.RowStyles.Add(new RowStyle(SizeType.Percent, 90));
+        
+        layout.Controls.Add(recordingTimeLabel, 0, 0);
+        layout.Controls.Add(recordButton, 0, 1);
+        layout.Controls.Add(stopButton, 0, 2);
+        layout.Controls.Add(playButton, 0, 3);
+
+        Controls.Add(layout);
     }
 
-    private void Timer_Tick(object sender, EventArgs e)
+    private void Timer_Tick(object? sender, EventArgs e)
     {
         TimeSpan elapsed = DateTime.Now - startTime;
-        //recordingTimeLabel.Text = elapsed.ToString(@"hh\:mm\:ss");
+        recordingTimeLabel.Text = elapsed.ToString(@"hh\:mm\:ss");
     }
 
     private void StartRecording(object? sender, EventArgs e)
     {
-        memoryStream = new MemoryStream();
+        // memoryStream = new MemoryStream();
+        // waveIn = new()
+        // {
+        //     WaveFormat = new WaveFormat(44100, 1)
+        // };
+
+        // //writer = new WaveFileWriter(new IgnoreDisposeStream(memoryStream), waveIn.WaveFormat);
+
+        // waveIn.StartRecording();
+
+        //delete audio first
+        audioFileReader = null;
+        if(File.Exists(path)){
+            //Thread.Sleep(1000);
+            File.Delete(path);
+        } 
+
         waveIn = new()
         {
             WaveFormat = new WaveFormat(44100, 1)
         };
-        waveIn.DataAvailable += WaveIn_DataAvailable;
-        //writer = new WaveFileWriter(new IgnoreDisposeStream(memoryStream), waveIn.WaveFormat);
+        try{
+            waveIn.DataAvailable += (sender, e) => {
+                //waveFileWriter = new(new IgnoreDisposeStream(memoryStream), waveIn.WaveFormat);
+                waveFileWriter = new(path, waveIn.WaveFormat);
+                MessageBox.Show("data available, writer is set");
+                waveFileWriter.Write(e.Buffer, 0, e.BytesRecorded);
+            };
+        }catch(Exception ex){
+            MessageBox.Show(ex.Message);
+        }
+        
+        stopButton.Visible = true;
+        recordButton.Visible = false;
+        playButton.Visible = false;
 
-        waveIn.StartRecording();
         startTime = DateTime.Now;
         timer.Start();
+
+        waveIn.StartRecording();
     }
 
-    private void StopRecordingButton_Click(object sender, EventArgs e)
+    private void StopRecording(object? sender, EventArgs e)
     {
+        waveFileWriter!.Close();
+        waveFileWriter.Dispose();
         waveIn.StopRecording();
         waveIn.Dispose();
-        writer.Close();
-        writer.Dispose();
+        waveFileWriter = null;
+
         timer.Stop();
+        audioFileReader = new(path);
 
-        memoryStream.Seek(0, SeekOrigin.Begin);
-        RecordedAudio = new MemoryStream(memoryStream.ToArray());
+        stopButton.Visible = false;
+        playButton.Visible = true;
+        recordButton.Visible = true;
+
+        // memoryStream.Seek(0, SeekOrigin.Begin);
+        // RecordedAudio = new MemoryStream(memoryStream.ToArray());
+        //SaveRecording();
     }
 
-    private void WaveIn_DataAvailable(object sender, WaveInEventArgs e)
+    private void PlayRecord(object? sender, EventArgs e)
     {
-        writer.Write(e.Buffer, 0, e.BytesRecorded);
-    }
-
-    private void PlayRecordingButton_Click(object sender, EventArgs e)
-    {
-        if (RecordedAudio != null)
-        {
-            RecordedAudio.Seek(0, SeekOrigin.Begin);
-            waveOut = new WaveOutEvent();
-            waveOut.Init(new WaveFileReader(RecordedAudio));
-            waveOut.Play();
-        }
-        else
-        {
-            MessageBox.Show("No recording available to play.");
-        }
-    }
-
-    private void SaveRecordingButton_Click(object sender, EventArgs e)
-    {
-        if (RecordedAudio != null)
-        {
-            SaveFileDialog saveFileDialog = new SaveFileDialog();
-            saveFileDialog.Filter = "WAV files (*.wav)|*.wav";
-            if (saveFileDialog.ShowDialog() == DialogResult.OK)
-            {
-                File.WriteAllBytes(saveFileDialog.FileName, RecordedAudio.ToArray());
-                MessageBox.Show("Recording saved.");
+        using(WaveOutEvent outputDevice = new()){
+            outputDevice.Init(audioFileReader);
+            outputDevice.Play();
+            while(outputDevice.PlaybackState == PlaybackState.Playing){
+                Thread.Sleep(1000);
             }
+        }         
+    }
+
+    private void SaveRecording()
+    {
+        if (RecordedAudio != null)
+        {
+            File.WriteAllBytes(path, RecordedAudio.ToArray());
+            MessageBox.Show("Recording saved.");
         }
         else
         {
