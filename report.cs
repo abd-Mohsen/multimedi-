@@ -8,7 +8,7 @@ namespace Report
 {
     public class ReportForm : MaterialForm
     {
-        MaterialTextBox textBox;
+        TextBox textBox;
         MaterialButton generateButton;
         MaterialButton exportButton;
 
@@ -21,15 +21,15 @@ namespace Report
             materialSkinManager.AddFormToManage(this);
             materialSkinManager.Theme = MaterialSkinManager.Themes.DARK;
 
-            Size = new Size(300, 400);
+            Size = new Size(300, 450);
             Text = "انشاء و تصدير تقرير";
 
             textBox = new()
             {
                 Multiline = true,
-                Height = 200,
-                Width = 200,
-                ScrollBars = RichTextBoxScrollBars.Vertical,
+                Height = 250,
+                Width = 290,
+                //ScrollBars = RichTextBoxScrollBars.Vertical,
                 //Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right,
             };
             
@@ -42,7 +42,7 @@ namespace Report
 
             exportButton = new()
             {
-                Text = "تصدير ك pdf",
+                Text = "pdf",
                 Dock = DockStyle.Top,
                 Visible = false,
             };
@@ -51,21 +51,24 @@ namespace Report
             TableLayoutPanel layout = new()
             {
                 Dock = DockStyle.Fill,
-                AutoScroll = true,
+                //AutoScroll = true,
             };
             
-            layout.RowStyles.Add(new RowStyle(SizeType.Percent, 90));
+            //layout.RowStyles.Add(new RowStyle(SizeType.Percent, 90));
             
             layout.Controls.Add(textBox, 0, 0);
             layout.Controls.Add(generateButton, 0, 1);
+            layout.Controls.Add(exportButton, 0, 2);
         
 
             Controls.Add(layout);
         }
 
         private void GenerateReport(object? sender, EventArgs e){
-            DocX wordFile = DocX.Create("output/report.docx");
+            DocX wordFile = DocX.Create("output/report");
+            wordFile.SetDefaultFont(fontFamily: null, fontSize: 16);
             wordFile.InsertParagraph(textBox.Text);
+            //wordFile.AddImage("output/selected.jpeg");
             wordFile.Save();
             exportButton.Visible = true;
         }

@@ -21,7 +21,7 @@ namespace Project
     {
         PictureBox pictureBox;
         //downscale picturebox    
-        Bitmap? originalImage;
+        public Bitmap? originalImage;
 
         string? patientName;
         AudioFileReader? audio;
@@ -134,7 +134,7 @@ namespace Project
             layout.Controls.Add(load2Button, 0, 3);
             layout.Controls.Add(classifyButton, 0, 3);
             layout.Controls.Add(enhanceButton, 0, 4);
-            layout.Controls.Add(smoothButton, 0, 4);
+            //layout.Controls.Add(smoothButton, 0, 4);
             layout.Controls.Add(textButton, 0, 5);
             layout.Controls.Add(audioButton, 0, 5);
             layout.Controls.Add(reportButton, 0, 6);
@@ -166,6 +166,7 @@ namespace Project
                         audioButton.Visible = true;
                         reportButton.Visible = true;
                         load1Button.Text = "تبديل الصورة";
+                        originalImage.Save("output/selected.jpeg");
                         //ConvertToFormat(originalImage!, PixelFormat.Format16bppGrayScale);
                     }
                     else CompareImages(selectedImage); 
