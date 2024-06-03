@@ -25,14 +25,14 @@ namespace Report
                 Text = " KB حجم الصورة",
                 Dock = DockStyle.Top
             };
-            searchSizeButton.Click +=  BtnSearchbysize_Click;
+            searchSizeButton.Click +=  SearchSize;
 
             MaterialButton searchDateButton = new()
             {
                 Text = "تاريخ التعديل على الصورة",
                 Dock = DockStyle.Top
             };
-            searchDateButton.Click += BtnSearch_Click;
+            searchDateButton.Click += SearchDate;
             
             size.Name = "الحجم";
             size.Width = 200;
@@ -56,7 +56,7 @@ namespace Report
             Controls.Add(layout);
         }
 
-             private void BtnSearch_Click(object sender, EventArgs e)
+        private void SearchDate(object? sender, EventArgs e)
         {
             DateTime modificationDate;
             if (!DateTime.TryParse(date.Text, out modificationDate))
@@ -64,14 +64,14 @@ namespace Report
                 MessageBox.Show("ادخل قيمة صالحة");
                 return;
             }
-            SearchImagesbydate(modificationDate);
+            SearchDateHelper(modificationDate);
         }
 
 
 
 
 
-        private void BtnSearchbysize_Click(object sender, EventArgs e)
+        private void SearchSize(object? sender, EventArgs e)
         {
             long imageSize;
             if (!long.TryParse(size.Text, out imageSize))
@@ -79,13 +79,10 @@ namespace Report
                 MessageBox.Show("ادخل قيمة صالحة");
                 return;
             }
-            SearchImagesbysize(imageSize);
+            SearchSizeHelper(imageSize);
         }
 
-
-
-
-        private void SearchImagesbysize(long imageSize)
+        private static void SearchSizeHelper(long imageSize)
         {
             FolderBrowserDialog folderBrowser = new FolderBrowserDialog();
             DialogResult result = folderBrowser.ShowDialog();
@@ -125,10 +122,7 @@ namespace Report
             }
         }
 
-
-
-
-        private void SearchImagesbydate(DateTime modificationDate)
+        private static void SearchDateHelper(DateTime modificationDate)
         {
             FolderBrowserDialog folderBrowser = new FolderBrowserDialog();
             DialogResult result = folderBrowser.ShowDialog();

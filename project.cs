@@ -35,6 +35,7 @@ namespace Project
         MaterialButton audioButton = new();
         MaterialButton reportButton = new();
         MaterialButton searchButton = new();
+        MaterialButton compressButton = new();
     
 
         public MainForm()
@@ -129,6 +130,14 @@ namespace Project
             };
             searchButton.Click += OpenSearchForm;
 
+            compressButton = new()
+            {
+                Text = "ضغط وحفظ الملفات",
+                Dock = DockStyle.Top,
+                Visible = false,
+            };
+            compressButton.Click += CompressAndSave;
+
         
             TableLayoutPanel layout = new()
             {
@@ -149,6 +158,7 @@ namespace Project
             layout.Controls.Add(audioButton, 0, 5);
             layout.Controls.Add(reportButton, 0, 6);
             layout.Controls.Add(searchButton, 0, 6);
+            layout.Controls.Add(compressButton, 0, 7);
             //layout.SetRowSpan(pictureBox2, 20);
 
             Controls.Add(layout);
@@ -176,8 +186,9 @@ namespace Project
                         textButton.Visible = true;
                         audioButton.Visible = true;
                         reportButton.Visible = true;
+                        compressButton.Visible = true;
                         load1Button.Text = "تبديل الصورة";
-                        originalImage.Save("output/selected.jpeg");
+                        originalImage.Save("temp/selected.jpeg");
                         //ConvertToFormat(originalImage!, PixelFormat.Format16bppGrayScale);
                     }
                     else CompareImages(selectedImage); 
@@ -323,6 +334,20 @@ namespace Project
                 {
                     //
                 }
+            }
+        }
+
+        private void CompressAndSave(object? sender, EventArgs e){
+            File.SetAttributes("temp", FileAttributes.Normal);
+            string directoryPath = "temp";
+            string zipFilePath = "C:/Users/ABD/Desktop/res.zip";
+
+            using ZipArchive archive = ZipFile.Open(zipFilePath, ZipArchiveMode.Create);
+            string[] files = Directory.GetFiles(directoryPath);
+
+            foreach (string file in files)
+            {
+                archive.CreateEntryFromFile(file, Path.GetFileName(file));
             }
         }
 

@@ -91,7 +91,7 @@ public class AudioForm : MaterialForm
         };
         try{
             waveIn.DataAvailable += (sender, e) => {
-                waveFileWriter = new(path2, waveIn.WaveFormat);
+                waveFileWriter ??= new(path2, waveIn.WaveFormat);
                 waveFileWriter.Write(e.Buffer, 0, e.BytesRecorded);
                 MessageBox.Show("data available, writer is set");
             };
