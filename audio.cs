@@ -9,8 +9,6 @@ public class AudioForm : MaterialForm
 {
     private WaveInEvent waveIn;
     private WaveFileWriter? waveFileWriter;
-    private MemoryStream memoryStream;
-    private WaveOutEvent waveOut;
     private System.Windows.Forms.Timer timer;
     private DateTime startTime;
     private MaterialButton recordButton = new();
@@ -22,7 +20,6 @@ public class AudioForm : MaterialForm
 
     readonly string path = "output/audio.wav";
     readonly string path2 = "output/audio_temp.wav";
-    AudioFileReader? audioFileReader;
 
     public MemoryStream RecordedAudio { get; private set; }
 
@@ -81,22 +78,12 @@ public class AudioForm : MaterialForm
 
     private void StartRecording(object? sender, EventArgs e)
     {
-        // memoryStream = new MemoryStream();
-        // waveIn = new()
-        // {
-        //     WaveFormat = new WaveFormat(44100, 1)
-        // };
-
-        // //writer = new WaveFileWriter(new IgnoreDisposeStream(memoryStream), waveIn.WaveFormat);
-
-        // waveIn.StartRecording();
-
         //delete audio first
-        audioFileReader = null;
-        if(File.Exists(path)){
-            //Thread.Sleep(1000);
-            File.Delete(path);
-        } 
+        //audioFileReader = null;
+        // if(File.Exists(path)){
+        //     //Thread.Sleep(1000);
+        //     File.Delete(path);
+        // } 
 
         waveIn = new()
         {
@@ -104,10 +91,9 @@ public class AudioForm : MaterialForm
         };
         try{
             waveIn.DataAvailable += (sender, e) => {
-                //waveFileWriter = new(new IgnoreDisposeStream(memoryStream), waveIn.WaveFormat);
-                waveFileWriter = new(path, waveIn.WaveFormat);
-                MessageBox.Show("data available, writer is set");
+                waveFileWriter = new(path2, waveIn.WaveFormat);
                 waveFileWriter.Write(e.Buffer, 0, e.BytesRecorded);
+                MessageBox.Show("data available, writer is set");
             };
         }catch(Exception ex){
             MessageBox.Show(ex.Message);
@@ -132,19 +118,16 @@ public class AudioForm : MaterialForm
         waveFileWriter = null;
 
         timer.Stop();
-        audioFileReader = new(path);
+        //audioFileReader = new(path);
 
         stopButton.Visible = false;
         playButton.Visible = true;
         recordButton.Visible = true;
-
-        // memoryStream.Seek(0, SeekOrigin.Begin);
-        // RecordedAudio = new MemoryStream(memoryStream.ToArray());
-        //SaveRecording();
     }
 
     private void PlayRecord(object? sender, EventArgs e)
     {
+        AudioFileReader? audioFileReader = new(path);
         using(WaveOutEvent outputDevice = new()){
             outputDevice.Init(audioFileReader);
             outputDevice.Play();

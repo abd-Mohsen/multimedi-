@@ -70,7 +70,7 @@ namespace Report
         }
 
         private void GenerateReport(object? sender, EventArgs e){
-            DocX wordFile = DocX.Create("output/report");
+            DocX wordFile = DocX.Create("temp/report");
             wordFile.SetDefaultFont(fontFamily: null, fontSize: 16);
             wordFile.InsertParagraph(textBox.Text);
             //wordFile.AddImage("output/selected.jpeg");
@@ -84,9 +84,9 @@ namespace Report
             try
             {
                 Document document = new Document();
-                document.LoadFromFile("output/report.docx");
-                document.SaveToFile("output/report.pdf", FileFormat.PDF);
-                MessageBox.Show("Conversion Successful!");
+                document.LoadFromFile("temp/report.docx");
+                document.SaveToFile("temp/report.pdf", FileFormat.PDF);
+                MessageBox.Show("تم التصدير بنجاح");
             }
             catch (Exception ex)
             {
@@ -120,7 +120,7 @@ namespace Report
         }
 
         // Save the document
-        document.Save("output/report2.pdf");
+        document.Save("temp/report.pdf");
     }
 
     }

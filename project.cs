@@ -34,6 +34,7 @@ namespace Project
         MaterialButton textButton = new();
         MaterialButton audioButton = new();
         MaterialButton reportButton = new();
+        MaterialButton searchButton = new();
     
 
         public MainForm()
@@ -120,6 +121,14 @@ namespace Project
             };
             reportButton.Click += OpenReportForm;
 
+            searchButton = new()
+            {
+                Text = "بحث",
+                Dock = DockStyle.Top,
+                Visible = true,
+            };
+            searchButton.Click += OpenSearchForm;
+
         
             TableLayoutPanel layout = new()
             {
@@ -139,6 +148,7 @@ namespace Project
             layout.Controls.Add(textButton, 0, 5);
             layout.Controls.Add(audioButton, 0, 5);
             layout.Controls.Add(reportButton, 0, 6);
+            layout.Controls.Add(searchButton, 0, 6);
             //layout.SetRowSpan(pictureBox2, 20);
 
             Controls.Add(layout);
@@ -297,19 +307,23 @@ namespace Project
         }
 
         private void OpenReportForm(object? sender, EventArgs e){
-            try{
-                using (var reportForm = new ReportForm())
+            using (var reportForm = new ReportForm())
+            {
+                if (reportForm.ShowDialog() == DialogResult.OK)
                 {
-                    if (reportForm.ShowDialog() == DialogResult.OK)
-                    {
-                        //
-                    }
+                    //
                 }
             }
-            catch(Exception ex){
-                MessageBox.Show(ex.Message);
+        }
+
+        private void OpenSearchForm(object? sender, EventArgs e){
+            using (var searchForm = new SearchForm())
+            {
+                if (searchForm.ShowDialog() == DialogResult.OK)
+                {
+                    //
+                }
             }
-           
         }
 
 

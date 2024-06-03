@@ -11,6 +11,7 @@
 samples/
 output/
 res/
+temp/
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
