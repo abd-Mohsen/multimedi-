@@ -11,26 +11,31 @@ using MaterialSkin;
 using AForge.Imaging;
 using AForge.Imaging.Filters;
 using Microsoft.VisualBasic;
+using NAudio;
+using NAudio.Wave;
+using Report;
 
 namespace Project
 {
-    public partial class MyForm : MaterialForm
+    public partial class MainForm : MaterialForm
     {
         PictureBox pictureBox;
         //downscale picturebox    
         Bitmap? originalImage;
 
         string? patientName;
-        
+        AudioFileReader? audio;
         MaterialButton load1Button = new();
         MaterialButton load2Button = new();
         MaterialButton classifyButton = new();
         MaterialButton enhanceButton = new();
         MaterialButton smoothButton = new();
         MaterialButton textButton = new();
+        MaterialButton audioButton = new();
+        MaterialButton reportButton = new();
     
 
-        public MyForm()
+        public MainForm()
         {
             MaterialSkinManager materialSkinManager = MaterialSkinManager.Instance;
             materialSkinManager.AddFormToManage(this);
@@ -98,6 +103,22 @@ namespace Project
             };
             textButton.Click += AddTextToImage;
 
+            audioButton = new()
+            {
+                Text = "إضافة تعليق صوتي",
+                Dock = DockStyle.Top,
+                Visible = false,
+            };
+            audioButton.Click += OpenAudioForm;
+
+            reportButton = new()
+            {
+                Text = "تقرير",
+                Dock = DockStyle.Top,
+                Visible = false,
+            };
+            reportButton.Click += OpenReportForm;
+
         
             TableLayoutPanel layout = new()
             {
@@ -115,6 +136,8 @@ namespace Project
             layout.Controls.Add(enhanceButton, 0, 4);
             layout.Controls.Add(smoothButton, 0, 4);
             layout.Controls.Add(textButton, 0, 5);
+            layout.Controls.Add(audioButton, 0, 5);
+            layout.Controls.Add(reportButton, 0, 6);
             //layout.SetRowSpan(pictureBox2, 20);
 
             Controls.Add(layout);
@@ -140,6 +163,8 @@ namespace Project
                         enhanceButton.Visible = true;
                         smoothButton.Visible = true;
                         textButton.Visible = true;
+                        audioButton.Visible = true;
+                        reportButton.Visible = true;
                         load1Button.Text = "تبديل الصورة";
                         //ConvertToFormat(originalImage!, PixelFormat.Format16bppGrayScale);
                     }
@@ -232,6 +257,71 @@ namespace Project
             pictureBox.Image = complexImage.ToBitmap();
         }
 
+        private void AddTextToImage(object? sender, EventArgs e)
+        {
+            string input = Interaction.InputBox("أدخل اسم المريض", "الاسم", "");
+
+            // Store the entered name
+            if (string.IsNullOrEmpty(input)){
+                MessageBox.Show("No name entered!");
+                return;
+            }
+            patientName = input;
+            
+            Bitmap newImage = originalImage!.Clone(new Rectangle(0, 0, originalImage.Width, originalImage.Height), PixelFormat.Format32bppArgb);
+            using (Graphics graphics = Graphics.FromImage(newImage))
+            {
+                Font font = new("Arial", 28);
+                Brush brush = new SolidBrush(Color.Red);
+                PointF position = new(10, 10); // Adjust the position as needed
+                graphics.DrawString(patientName, font, brush, position);
+            }
+
+            pictureBox.Image = newImage;
+        }
+        
+        private void OpenAudioForm(object? sender, EventArgs e){
+            using (var audioForm = new AudioForm())
+            {
+                if (audioForm.ShowDialog() == DialogResult.OK)
+                {
+                    var recordedAudio = audioForm.RecordedAudio;
+                    if (recordedAudio != null)
+                    {
+                        // Handle the recorded audio (e.g., save, play, or process it)
+                    }
+                }
+            }
+        }
+
+        private void OpenReportForm(object? sender, EventArgs e){
+            try{
+                using (var reportForm = new ReportForm(this))
+                {
+                    if (reportForm.ShowDialog() == DialogResult.OK)
+                    {
+                        //
+                    }
+                }
+            }
+            catch(Exception ex){
+                MessageBox.Show(ex.Message);
+            }
+           
+        }
+
+
+        static class Program
+        {
+            [STAThread]
+            static void Main()
+            {
+                Application.EnableVisualStyles();
+                Application.SetCompatibleTextRenderingDefault(false);
+                Application.Run(new MainForm());
+            }
+        }
+
         static int NearestPowerOfTwo(int val){
             int power = 1;
             while(power < val) power <<= 1;
@@ -273,46 +363,11 @@ namespace Project
             return filterMask;
         }
 
-        private void AddTextToImage(object? sender, EventArgs e)
-        {
-            string input = Interaction.InputBox("أدخل اسم المريض", "الاسم", "");
-
-            // Store the entered name
-            if (string.IsNullOrEmpty(input)){
-                MessageBox.Show("No name entered!");
-                return;
-            }
-            patientName = input;
-            
-            Bitmap newImage = originalImage!.Clone(new Rectangle(0, 0, originalImage.Width, originalImage.Height), PixelFormat.Format32bppArgb);
-            using (Graphics graphics = Graphics.FromImage(newImage))
-            {
-                Font font = new("Arial", 22);
-                Brush brush = new SolidBrush(Color.Red);
-                PointF position = new(10, 10); // Adjust the position as needed
-                graphics.DrawString(patientName, font, brush, position);
-            }
-
-            pictureBox.Image = newImage;
-        }
-
         static void ApplyFilterMask(ComplexImage complexImage, double[,] filterMask){
             for(int y=0; y<complexImage.Height; y++){
                 for(int x=0; x<complexImage.Width; x++){
                     complexImage.Data[y,x] *= filterMask[y,x];
                 }
-            }
-        }
-
-
-        static class Program
-        {
-            [STAThread]
-            static void Main()
-            {
-                Application.EnableVisualStyles();
-                Application.SetCompatibleTextRenderingDefault(false);
-                Application.Run(new MyForm());
             }
         }
 
